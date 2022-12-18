@@ -1,27 +1,68 @@
 pipeline {
     agent any
     environment {
-        JAVA_HOME = 'C:\\Program Files\\Java\\jdk-17.0.5'
-        
-        jar = 'C:\\Program Files\\Java\\jdk-17.0.5\\bin'
-    }
-    triggers {
-        pollSCM '* * * * *'
+        DOCKER_IMAGE_NAME ="192474/group-service"
     }
     stages {
-        stage('Build Spring Boot App') {
-            steps {
-                bat 'build.bat'
-            }
-        }
+       
         stage('Build Docker Image') {
+            when {
+                branch 'master'
+            }
             steps {
-                bat 'docker.build.bat'
+                script {
+                    app = docker.build(DOCKER_IMAGE_NAME)
+                }
             }
         }
-        stage('Run Docker Container') {
+        stage('Push Docker Image') {
+            when {
+                branch 'master'
+            }
             steps {
-                bat 'docker.run.bat'
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
+                        app.push("${env.BUILD_NUMBER}")
+                        app.push("latest")
+                    }
+                }
+            }
+        }
+        stage('CanaryDeploy') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 1
+            }
+            steps {
+                kubernetesDeploy(
+                   // kubeconfigId: 'kubeconfig',
+                   // configs: 'CICD.yml',
+                   // enableConfigSubstitution: true
+                )
+            }
+        }
+        stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 0
+            }
+            steps {
+                input 'Deploy to Production?'
+                milestone(1)
+                kubernetesDeploy(
+                  //  kubeconfigId: 'kubeconfig',
+                   // configs: 'CICD.yml',
+                   // enableConfigSubstitution: true
+                )
+                kubernetesDeploy(
+                   // kubeconfigId: 'kubeconfig',
+                    // configs: 'CICD.yml',
+                    enableConfigSubstitution: true
+                )
             }
         }
     }
