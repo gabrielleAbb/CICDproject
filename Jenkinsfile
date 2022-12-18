@@ -1,44 +1,20 @@
 pipeline {
     agent any
-    environment {
-        DOCKER_IMAGE_NAME ="192474/group-service"
-    }
+
     stages {
-       
-        stage('Build Docker Image') {
-            when {
-                branch 'main'
-            }
+        stage('Build') {
             steps {
-                echo 'build'
+                echo 'Building..'
             }
         }
-        stage('Push Docker Image') {
-            when {
-                branch 'main'
-            }
+        stage('Test') {
             steps {
-                 echo 'build'
+                echo 'Testing..'
+            }
         }
-        stage('CanaryDeploy') {
-            when {
-                branch 'main'
-            }
-            environment { 
-                CANARY_REPLICAS = 1
-            }
+        stage('Deploy') {
             steps {
-                echo 'build'
-        }
-        stage('DeployToProduction') {
-            when {
-                branch 'main'
-            }
-            environment { 
-                CANARY_REPLICAS = 0
-            }
-            steps {
-                 echo 'build'
+                echo 'Deploying....'
             }
         }
     }
