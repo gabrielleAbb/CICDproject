@@ -28,42 +28,5 @@ pipeline {
                 }
             }
         }
-        stage('CanaryDeploy') {
-            when {
-                branch 'main'
-            }
-            environment { 
-                CANARY_REPLICAS = 1
-            }
-            steps {
-                kubernetesDeploy(
-                   // kubeconfigId: 'kubeconfig',
-                   // configs: 'CICD.yml',
-                   // enableConfigSubstitution: true
-                )
-            }
-        }
-        stage('DeployToProduction') {
-            when {
-                branch 'main'
-            }
-            environment { 
-                CANARY_REPLICAS = 0
-            }
-            steps {
-                input 'Deploy to Production?'
-                milestone(1)
-                kubernetesDeploy(
-                  //  kubeconfigId: 'kubeconfig',
-                   // configs: 'CICD.yml',
-                   // enableConfigSubstitution: true
-                )
-                kubernetesDeploy(
-                   // kubeconfigId: 'kubeconfig',
-                    // configs: 'CICD.yml',
-                    enableConfigSubstitution: true
-                )
-            }
-        }
     }
 }
